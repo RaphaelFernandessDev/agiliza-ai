@@ -700,21 +700,14 @@ export default function Home() {
                                     >
                                       <span className={`absolute inset-y-1 left-1 w-1 rounded-full ${markerMeta[task.marker].strip}`} />
                                       <div className="flex items-start gap-2">
-                                        <button
-                                          type="button"
-                                          onClick={(event) => {
-                                            event.stopPropagation();
-                                            toggleTaskDone(task);
-                                          }}
-                                          className={`mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
-                                            task.status === "done"
-                                              ? "border-[var(--accent-600)] bg-[var(--accent-600)] text-white"
-                                              : "border-slate-300 bg-white text-transparent hover:border-[var(--accent-400)]"
-                                          }`}
+                                        <input
+                                          type="checkbox"
+                                          className="ui-checkbox mt-0.5"
+                                          checked={task.status === "done"}
+                                          onClick={(event) => event.stopPropagation()}
+                                          onChange={() => toggleTaskDone(task)}
                                           aria-label={task.status === "done" ? "Marcar como nao concluida" : "Marcar como concluida"}
-                                        >
-                                          ?
-                                        </button>
+                                        />
                                         <p className="text-sm font-medium text-slate-800">{task.title}</p>
                                       </div>
                                       {task.description ? <p className="mt-1 line-clamp-2 text-xs text-slate-500">{task.description}</p> : null}
@@ -792,21 +785,14 @@ export default function Home() {
                                           <tr key={task.id} onClick={() => setSelectedTaskId(task.id)} className="cursor-pointer border-t border-slate-200 transition hover:bg-slate-50">
                                             <td className="px-3 py-2.5 font-medium text-slate-800">
                                               <div className="flex items-center gap-2">
-                                                <button
-                                                  type="button"
-                                                  onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    toggleTaskDone(task);
-                                                  }}
-                                                  className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] transition ${
-                                                    task.status === "done"
-                                                      ? "border-[var(--accent-600)] bg-[var(--accent-600)] text-white"
-                                                      : "border-slate-300 bg-white text-transparent hover:border-[var(--accent-400)]"
-                                                  }`}
+                                                <input
+                                                  type="checkbox"
+                                                  className="ui-checkbox"
+                                                  checked={task.status === "done"}
+                                                  onClick={(event) => event.stopPropagation()}
+                                                  onChange={() => toggleTaskDone(task)}
                                                   aria-label={task.status === "done" ? "Marcar como nao concluida" : "Marcar como concluida"}
-                                                >
-                                                  ?
-                                                </button>
+                                                />
                                                 <span className={`h-5 w-1 rounded-full ${markerMeta[task.marker].strip}`} />
                                                 <span>{task.title}</span>
                                               </div>
@@ -861,114 +847,193 @@ export default function Home() {
       </div>
       {selectedTask ? (
         <div className="task-overlay fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-6" onClick={() => setSelectedTaskId("")}>
-          <div className="task-drawer glass-l3 relative w-full max-w-[1040px] overflow-hidden rounded-3xl border border-slate-200 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="glass-l2 sticky top-0 z-10 border-b border-slate-200 px-4 pb-3 pt-4">
-              <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.1em] text-slate-500">Detalhes da tarefa</p>
-                <h3 className="text-lg font-semibold text-slate-900">{selectedTask.title}</h3>
-                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
-                  <span className={`rounded-full border px-2 py-0.5 ${priorityMeta[selectedTask.priority].badge}`}>{priorityMeta[selectedTask.priority].label}</span>
-                  <span className="rounded-full border border-slate-300 px-2 py-0.5 text-slate-600">
-                    Checklist {selectedChecklistProgress.done}/{selectedChecklistProgress.total}
-                  </span>
-                  {selectedTaskBlocking.length > 0 ? (
-                    <span className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-amber-700">
-                      Bloqueada por {selectedTaskBlocking.length}
+          <div className="task-drawer glass-l3 relative w-full max-w-[1180px] overflow-hidden rounded-3xl border border-slate-200 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="task-modal-header glass-l2 sticky top-0 z-10 border-b border-slate-200 px-5 pb-4 pt-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="task-modal-kicker">Detalhes da tarefa</p>
+                  <h3 className="task-modal-title">{selectedTask.title}</h3>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    <span className={`rounded-full border px-2.5 py-1 ${priorityMeta[selectedTask.priority].badge}`}>
+                      {priorityMeta[selectedTask.priority].label}
                     </span>
-                  ) : null}
+                    <span className="task-pill-muted">
+                      Checklist {selectedChecklistProgress.done}/{selectedChecklistProgress.total}
+                    </span>
+                    {selectedTaskBlocking.length > 0 ? (
+                      <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-amber-700">
+                        Bloqueada por {selectedTaskBlocking.length}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => duplicateTask(selectedTask.id)} className="ui-btn ui-btn-ghost px-2 py-1 text-sm">
-                  Duplicar
-                </button>
-                <button type="button" onClick={() => setSelectedTaskId("")} className="ui-btn ui-btn-ghost px-2 py-1 text-sm">
-                  Fechar
-                </button>
-              </div>
-            </div>
-            </div>
-
-            <div className="max-h-[calc(88vh-86px)] overflow-auto p-4">
-
-            <div className="grid gap-3 lg:grid-cols-2">
-              <FieldLabel label="Titulo"><input className="field-input" value={selectedTask.title} onChange={(event) => updateTask(selectedTask.id, { title: event.target.value })} /></FieldLabel>
-              <FieldLabel label="Marcador"><select className="field-input" value={selectedTask.marker} onChange={(event) => updateTask(selectedTask.id, { marker: event.target.value as MarkerTone })}>{markerOptions.map((marker) => <option key={marker} value={marker}>{markerMeta[marker].label}</option>)}</select></FieldLabel>
-              <FieldLabel label="Descricao"><textarea className="field-input h-24 resize-none" value={selectedTask.description} onChange={(event) => updateTask(selectedTask.id, { description: event.target.value })} /></FieldLabel>
-              <div className="grid grid-cols-2 gap-2">
-                <FieldLabel label="Status"><select className="field-input" value={selectedTask.status} onChange={(event) => changeTaskStatus(selectedTask.id, event.target.value as TaskStatus)}>{statusOptions.map((status) => <option key={status} value={status}>{statusMeta[status].label}</option>)}</select></FieldLabel>
-                <FieldLabel label="Prioridade"><select className="field-input" value={selectedTask.priority} onChange={(event) => updateTask(selectedTask.id, { priority: event.target.value as TaskPriority })}>{Object.keys(priorityMeta).map((priority) => <option key={priority} value={priority}>{priorityMeta[priority as TaskPriority].label}</option>)}</select></FieldLabel>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <FieldLabel label="Responsavel"><select className="field-input" value={selectedTask.assignee} onChange={(event) => updateTask(selectedTask.id, { assignee: event.target.value })}>{members.map((member) => <option key={member} value={member}>{member}</option>)}</select></FieldLabel>
-                <FieldLabel label="Prazo"><QuickDateField value={selectedTask.dueDate} onChange={(value) => updateTask(selectedTask.id, { dueDate: value })} /></FieldLabel>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => duplicateTask(selectedTask.id)} className="ui-btn ui-btn-ghost px-3 py-1.5 text-sm">
+                    Duplicar
+                  </button>
+                  <button type="button" onClick={() => setSelectedTaskId("")} className="ui-btn ui-btn-ghost px-3 py-1.5 text-sm">
+                    Fechar
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="mt-3 grid gap-3 lg:grid-cols-2">
-              <FieldLabel label="Dependencias">
-                <div className="glass-soft max-h-36 space-y-1 overflow-auto rounded-md border border-slate-200 p-2">
-                  {activeProject.tasks.filter((task) => task.id !== selectedTask.id).length === 0 ? (
-                    <p className="text-xs text-slate-500">Nao ha outras tarefas neste projeto.</p>
-                  ) : (
-                    activeProject.tasks.filter((task) => task.id !== selectedTask.id).map((task) => {
-                      const checked = selectedTask.blockedBy.includes(task.id);
-                      return (
-                        <label key={task.id} className="flex items-center gap-2 text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={(event) => {
-                              const next = event.target.checked ? [...selectedTask.blockedBy, task.id] : selectedTask.blockedBy.filter((item) => item !== task.id);
-                              updateTask(selectedTask.id, { blockedBy: next });
-                            }}
-                          />
-                          <span className="truncate">{task.title}</span>
-                          <span className="text-[10px] text-slate-500">({statusMeta[task.status].label})</span>
-                        </label>
-                      );
-                    })
-                  )}
-                </div>
-              </FieldLabel>
-              <FieldLabel label="Checklist">
-                <div className="glass-soft space-y-2 rounded-md border border-slate-200 p-2">
-                  <div className="flex gap-2">
-                    <input className="field-input" placeholder="Nova subtarefa" value={newSubtaskTitle} onChange={(event) => setNewSubtaskTitle(event.target.value)} />
-                    <button type="button" onClick={() => addSubtask(selectedTask.id)} className="ui-btn ui-btn-primary px-2.5 py-1.5 text-xs">+</button>
+            <div className="task-modal-body max-h-[calc(88vh-110px)] overflow-auto p-5 md:p-6">
+              <div className="task-modal-grid">
+                <section className="task-modal-section task-modal-section-wide">
+                  <div className="task-section-head">
+                    <p className="task-section-title">Informacoes gerais</p>
+                    <p className="task-section-caption">Dados principais da tarefa</p>
                   </div>
-                  <div className="space-y-1.5">
-                    {selectedTask.checklist.length === 0 ? <p className="text-xs text-slate-500">Sem subtarefas.</p> : selectedTask.checklist.map((item) => <div key={item.id} className="glass-l1 flex items-center gap-2 rounded-md border border-slate-200 px-2 py-1.5 text-xs"><input type="checkbox" checked={item.done} onChange={() => toggleSubtask(selectedTask.id, item.id)} /><span className={`flex-1 ${item.done ? "line-through text-slate-400" : "text-slate-700"}`}>{item.title}</span><button type="button" onClick={() => removeSubtask(selectedTask.id, item.id)} className="text-rose-600">x</button></div>)}
+                  <div className="task-section-grid mt-4">
+                    <FieldLabel label="Titulo">
+                      <input className="field-input" value={selectedTask.title} onChange={(event) => updateTask(selectedTask.id, { title: event.target.value })} />
+                    </FieldLabel>
+                    <FieldLabel label="Marcador">
+                      <select className="field-input" value={selectedTask.marker} onChange={(event) => updateTask(selectedTask.id, { marker: event.target.value as MarkerTone })}>
+                        {markerOptions.map((marker) => <option key={marker} value={marker}>{markerMeta[marker].label}</option>)}
+                      </select>
+                    </FieldLabel>
                   </div>
-                </div>
-              </FieldLabel>
-            </div>
+                  <div className="mt-4">
+                    <FieldLabel label="Descricao">
+                      <textarea className="field-input task-textarea-main w-full resize-y" value={selectedTask.description} onChange={(event) => updateTask(selectedTask.id, { description: event.target.value })} />
+                    </FieldLabel>
+                  </div>
+                </section>
 
-            <div className="mt-3 grid gap-3 lg:grid-cols-2">
-              <FieldLabel label="Comentarios">
-                <div className="glass-soft space-y-2 rounded-md border border-slate-200 p-2">
-                  <div className="flex gap-2">
-                    <input className="field-input" placeholder="Escreva um comentario (use @Ana, @Bruno...)" value={newCommentText} onChange={(event) => setNewCommentText(event.target.value)} />
-                    <button type="button" onClick={() => addComment(selectedTask.id)} className="ui-btn ui-btn-primary px-2.5 py-1.5 text-xs">Enviar</button>
+                <section className="task-modal-section">
+                  <div className="task-section-head">
+                    <p className="task-section-title">Execucao</p>
+                    <p className="task-section-caption">Status e planejamento</p>
                   </div>
-                  <p className="text-[10px] text-slate-500">Mencoes disponiveis: {members.map((member) => `@${member}`).join(", ")}</p>
-                  <div className="max-h-36 space-y-1.5 overflow-auto">
-                    {selectedTask.comments.length === 0 ? <p className="text-xs text-slate-500">Sem comentarios.</p> : selectedTask.comments.map((comment) => <div key={comment.id} className="glass-l1 rounded-md border border-slate-200 px-2 py-1.5 text-xs"><p className="font-medium text-slate-700">{comment.author}</p><p className="mt-0.5 text-slate-600"><CommentText text={comment.text} /></p>{comment.mentions.length > 0 ? <div className="mt-1 flex flex-wrap gap-1">{comment.mentions.map((mention) => <span key={`${comment.id}-${mention}`} className="rounded-full border border-[var(--accent-300)] bg-[var(--accent-soft)] px-1.5 py-0.5 text-[10px] text-[var(--accent-700)]">@{mention}</span>)}</div> : null}<p className="mt-1 text-[10px] text-slate-500">{comment.createdAt}</p></div>)}
+                  <div className="task-meta-grid mt-4">
+                    <FieldLabel label="Status">
+                      <select className="field-input" value={selectedTask.status} onChange={(event) => changeTaskStatus(selectedTask.id, event.target.value as TaskStatus)}>
+                        {statusOptions.map((status) => <option key={status} value={status}>{statusMeta[status].label}</option>)}
+                      </select>
+                    </FieldLabel>
+                    <FieldLabel label="Prioridade">
+                      <select className="field-input" value={selectedTask.priority} onChange={(event) => updateTask(selectedTask.id, { priority: event.target.value as TaskPriority })}>
+                        {Object.keys(priorityMeta).map((priority) => <option key={priority} value={priority}>{priorityMeta[priority as TaskPriority].label}</option>)}
+                      </select>
+                    </FieldLabel>
+                    <FieldLabel label="Responsavel">
+                      <select className="field-input" value={selectedTask.assignee} onChange={(event) => updateTask(selectedTask.id, { assignee: event.target.value })}>
+                        {members.map((member) => <option key={member} value={member}>{member}</option>)}
+                      </select>
+                    </FieldLabel>
+                    <FieldLabel label="Prazo">
+                      <QuickDateField value={selectedTask.dueDate} onChange={(value) => updateTask(selectedTask.id, { dueDate: value })} />
+                    </FieldLabel>
                   </div>
-                </div>
-              </FieldLabel>
-              <FieldLabel label="Atividade">
-                <div className="glass-soft max-h-44 space-y-1.5 overflow-auto rounded-md border border-slate-200 p-2">
-                  {selectedTask.activity.length === 0 ? <p className="text-xs text-slate-500">Sem atividade recente.</p> : selectedTask.activity.map((line, index) => <p key={`${line}-${index}`} className="glass-l1 rounded-md border border-slate-200 px-2 py-1.5 text-xs text-slate-600">{line}</p>)}
-                </div>
-              </FieldLabel>
-            </div>
+                </section>
 
-            <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
-              <FieldLabel label="Etiquetas (separadas por virgula)"><input className="field-input" value={selectedTask.labels.join(", ")} onChange={(event) => updateTask(selectedTask.id, { labels: event.target.value.split(",").map((label) => label.trim()).filter(Boolean) })} /></FieldLabel>
-              <button type="button" onClick={() => removeTask(selectedTask.id)} className="rounded-md border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100">Remover tarefa</button>
-            </div>
+                <section className="task-modal-section">
+                  <div className="task-section-head">
+                    <p className="task-section-title">Dependencias</p>
+                    <p className="task-section-caption">Bloqueios desta tarefa</p>
+                  </div>
+                  <div className="task-list-shell mt-4 max-h-44 space-y-1.5 overflow-auto rounded-xl border border-slate-200 p-3">
+                    {activeProject.tasks.filter((task) => task.id !== selectedTask.id).length === 0 ? (
+                      <p className="text-xs text-slate-500">Nao ha outras tarefas neste projeto.</p>
+                    ) : (
+                      activeProject.tasks.filter((task) => task.id !== selectedTask.id).map((task) => {
+                        const checked = selectedTask.blockedBy.includes(task.id);
+                        return (
+                          <label key={task.id} className="task-list-item flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-700">
+                            <input
+                              type="checkbox"
+                              className="ui-checkbox"
+                              checked={checked}
+                              onChange={(event) => {
+                                const next = event.target.checked ? [...selectedTask.blockedBy, task.id] : selectedTask.blockedBy.filter((item) => item !== task.id);
+                                updateTask(selectedTask.id, { blockedBy: next });
+                              }}
+                            />
+                            <span className="truncate">{task.title}</span>
+                            <span className="text-[10px] text-slate-500">({statusMeta[task.status].label})</span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </section>
+
+                <section className="task-modal-section">
+                  <div className="task-section-head">
+                    <p className="task-section-title">Checklist</p>
+                    <p className="task-section-caption">
+                      Itens concluidos: {selectedChecklistProgress.done}/{selectedChecklistProgress.total}
+                    </p>
+                  </div>
+                  <div className="task-list-shell mt-4 space-y-2 rounded-xl border border-slate-200 p-3">
+                    <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                      <input className="field-input" placeholder="Nova subtarefa" value={newSubtaskTitle} onChange={(event) => setNewSubtaskTitle(event.target.value)} />
+                      <button type="button" onClick={() => addSubtask(selectedTask.id)} className="ui-btn ui-btn-primary px-3 py-2 text-sm">Adicionar</button>
+                    </div>
+                    <div className="space-y-1.5">
+                      {selectedTask.checklist.length === 0 ? <p className="text-xs text-slate-500">Sem subtarefas.</p> : selectedTask.checklist.map((item) => (
+                        <div key={item.id} className="task-list-item glass-l1 flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-2 text-xs">
+                          <input type="checkbox" className="ui-checkbox" checked={item.done} onChange={() => toggleSubtask(selectedTask.id, item.id)} />
+                          <span className={`flex-1 ${item.done ? "line-through text-slate-400" : "text-slate-700"}`}>{item.title}</span>
+                          <button type="button" onClick={() => removeSubtask(selectedTask.id, item.id)} className="task-list-remove">x</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+
+                <section className="task-modal-section task-modal-section-wide">
+                  <div className="task-section-head">
+                    <p className="task-section-title">Colaboracao</p>
+                    <p className="task-section-caption">Comentarios e historico</p>
+                  </div>
+                  <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                    <div className="task-list-shell space-y-2 rounded-xl border border-slate-200 p-3">
+                      <FieldLabel label="Comentarios">
+                        <div className="space-y-2">
+                          <div className="grid gap-2">
+                            <textarea className="field-input task-textarea-comment resize-y" placeholder="Escreva um comentario (use @Ana, @Bruno...)" value={newCommentText} onChange={(event) => setNewCommentText(event.target.value)} />
+                            <div className="flex justify-end">
+                              <button type="button" onClick={() => addComment(selectedTask.id)} className="ui-btn ui-btn-primary px-3 py-2 text-sm">Enviar</button>
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500">Mencoes disponiveis: {members.map((member) => `@${member}`).join(", ")}</p>
+                          <div className="max-h-44 space-y-2 overflow-auto pr-1">
+                            {selectedTask.comments.length === 0 ? <p className="text-xs text-slate-500">Sem comentarios.</p> : selectedTask.comments.map((comment) => (
+                              <div key={comment.id} className="task-list-item glass-l1 rounded-lg border border-slate-200 px-3 py-2 text-xs">
+                                <p className="font-semibold text-slate-700">{comment.author}</p>
+                                <p className="mt-1 text-slate-600"><CommentText text={comment.text} /></p>
+                                {comment.mentions.length > 0 ? <div className="mt-1.5 flex flex-wrap gap-1">{comment.mentions.map((mention) => <span key={`${comment.id}-${mention}`} className="rounded-full border border-[var(--accent-300)] bg-[var(--accent-soft)] px-1.5 py-0.5 text-[10px] text-[var(--accent-700)]">@{mention}</span>)}</div> : null}
+                                <p className="mt-1.5 text-[10px] text-slate-500">{comment.createdAt}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </FieldLabel>
+                    </div>
+                    <div className="task-list-shell space-y-2 rounded-xl border border-slate-200 p-3">
+                      <FieldLabel label="Historico de atividade">
+                        <div className="max-h-64 space-y-2 overflow-auto pr-1">
+                          {selectedTask.activity.length === 0 ? <p className="text-xs text-slate-500">Sem atividade recente.</p> : selectedTask.activity.map((line, index) => (
+                            <p key={`${line}-${index}`} className="task-list-item glass-l1 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-600">{line}</p>
+                          ))}
+                        </div>
+                      </FieldLabel>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="task-modal-section task-modal-section-wide">
+                  <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+                    <FieldLabel label="Etiquetas (separadas por virgula)">
+                      <input className="field-input" value={selectedTask.labels.join(", ")} onChange={(event) => updateTask(selectedTask.id, { labels: event.target.value.split(",").map((label) => label.trim()).filter(Boolean) })} />
+                    </FieldLabel>
+                    <button type="button" onClick={() => removeTask(selectedTask.id)} className="rounded-md border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100">Remover tarefa</button>
+                  </div>
+                </section>
+              </div>
             </div>
           </div>
         </div>

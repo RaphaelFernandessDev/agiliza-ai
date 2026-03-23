@@ -97,7 +97,7 @@ export function TopBar({
             </button>
             {showColors ? (
               <div className="theme-palette-popover glass-surface absolute right-0 top-full z-[220] mt-2 w-[260px] rounded-2xl border border-slate-200 p-3 shadow-xl">
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-300">
                   Paleta do workspace
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -111,10 +111,10 @@ export function TopBar({
                           onAccentChange(accent);
                           setShowColors(false);
                         }}
-                        className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-xs transition ${
+                        className={`theme-palette-item flex items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-xs transition ${
                           active
-                            ? "border-[var(--accent-300)] bg-[var(--accent-soft)] text-[var(--accent-800)]"
-                            : "border-slate-300/70 hover:bg-slate-100/70"
+                            ? "theme-palette-item-active"
+                            : "theme-palette-item-idle"
                         }`}
                         aria-label={`Paleta ${accentName[accent]}`}
                         title={accentName[accent]}

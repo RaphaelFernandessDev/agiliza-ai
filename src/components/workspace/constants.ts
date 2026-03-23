@@ -19,9 +19,9 @@ export const statusMeta: Record<TaskStatus, { label: string; tone: string }> = {
 };
 
 export const priorityMeta: Record<TaskPriority, { label: string; badge: string }> = {
-  low: { label: "Baixa", badge: "bg-slate-100 text-slate-700 border-slate-200" },
-  medium: { label: "Media", badge: "bg-amber-50 text-amber-700 border-amber-200" },
-  high: { label: "Alta", badge: "bg-rose-50 text-rose-700 border-rose-200" },
+  low: { label: "Baixa", badge: "priority-badge priority-badge-low" },
+  medium: { label: "Media", badge: "priority-badge priority-badge-medium" },
+  high: { label: "Alta", badge: "priority-badge priority-badge-high" },
 };
 
 export const markerMeta: Record<MarkerTone, { label: string; strip: string }> = {
