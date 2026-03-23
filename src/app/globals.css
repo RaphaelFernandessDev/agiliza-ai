@@ -1,0 +1,625 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f5f9ff;
+  --foreground: #132242;
+  --surface: #ffffff;
+  --surface-strong: #ffffff;
+  --border: #d7e4ff;
+  --primary: #1e3a8a;
+  --secondary: #1e3a8a;
+  --accent: #1e3a8a;
+  --accent-800: #1e3a8a;
+  --accent-700: #1e3a8a;
+  --accent-600: #1e3a8a;
+  --accent-500: #1e3a8a;
+  --accent-400: #60a5fa;
+  --accent-300: #93c5fd;
+  --accent-soft: #eaf2ff;
+  --accent-soft-strong: #d9e7ff;
+  --accent-ring: rgba(147, 197, 253, 0.62);
+
+  --glass-saturation: 180%;
+  --glass-blur-sm: 10px;
+  --glass-blur-md: 18px;
+  --glass-blur-lg: 26px;
+  --glass-l1-bg: rgba(255, 255, 255, 0.34);
+  --glass-l2-bg: rgba(255, 255, 255, 0.26);
+  --glass-l3-bg: rgba(255, 255, 255, 0.2);
+  --glass-l1-border: rgba(255, 255, 255, 0.58);
+  --glass-l2-border: rgba(255, 255, 255, 0.5);
+  --glass-l3-border: rgba(255, 255, 255, 0.42);
+  --glass-highlight: rgba(255, 255, 255, 0.54);
+  --glass-shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.12);
+  --glass-shadow-md: 0 18px 44px rgba(15, 23, 42, 0.2);
+  --glass-shadow-lg: 0 28px 80px rgba(15, 23, 42, 0.26);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sora);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 10%, color-mix(in srgb, var(--accent-500) 34%, transparent), transparent 38%),
+    radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--accent-300) 24%, transparent), transparent 42%),
+    linear-gradient(145deg, color-mix(in srgb, var(--background) 82%, #0f172a 18%) 0%, var(--background) 100%);
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-sora), "Segoe UI", sans-serif;
+  min-height: 100vh;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+* {
+  border-color: var(--border);
+}
+
+:root[data-theme="light"][data-accent="modern_blue"] {
+  --background: #f5f9ff;
+  --foreground: #132242;
+  --surface: #eaf2ff;
+  --surface-strong: #dbeafe;
+  --border: #d7e4ff;
+  --accent-800: #1e3a8a;
+  --accent-700: #1e3a8a;
+  --accent-600: #1e3a8a;
+  --accent-500: #1e3a8a;
+  --accent-400: #60a5fa;
+  --accent-300: #93c5fd;
+  --accent-soft: #eaf2ff;
+  --accent-soft-strong: #d9e7ff;
+  --accent-ring: rgba(147, 197, 253, 0.62);
+}
+
+:root[data-theme="light"][data-accent="neon_purple"] {
+  --background: #faf5ff;
+  --foreground: #2d104f;
+  --surface: #f3e8ff;
+  --surface-strong: #e9d5ff;
+  --border: #ebdcff;
+  --accent-800: #581c87;
+  --accent-700: #6d28d9;
+  --accent-600: #7c3aed;
+  --accent-500: #9333ea;
+  --accent-400: #a855f7;
+  --accent-300: #c084fc;
+  --accent-soft: #f3e8ff;
+  --accent-soft-strong: #e9d5ff;
+  --accent-ring: rgba(192, 132, 252, 0.64);
+}
+
+:root[data-theme="light"][data-accent="minimal_green"] {
+  --background: #f0fdf4;
+  --foreground: #11361f;
+  --surface: #dcfce7;
+  --surface-strong: #bbf7d0;
+  --border: #cdeed7;
+  --accent-800: #166534;
+  --accent-700: #166534;
+  --accent-600: #166534;
+  --accent-500: #166534;
+  --accent-400: #22c55e;
+  --accent-300: #86efac;
+  --accent-soft: #dcfce7;
+  --accent-soft-strong: #bbf7d0;
+  --accent-ring: rgba(134, 239, 172, 0.58);
+}
+
+:root[data-theme="light"][data-accent="vibrant_orange"] {
+  --background: #fff7ed;
+  --foreground: #3a1e10;
+  --surface: #ffedd5;
+  --surface-strong: #fed7aa;
+  --border: #f2dcc5;
+  --accent-800: #c2410c;
+  --accent-700: #c2410c;
+  --accent-600: #c2410c;
+  --accent-500: #c2410c;
+  --accent-400: #fb923c;
+  --accent-300: #fdba74;
+  --accent-soft: #ffedd5;
+  --accent-soft-strong: #fed7aa;
+  --accent-ring: rgba(253, 186, 116, 0.62);
+}
+
+:root[data-theme="light"][data-accent="elegant_gray"] {
+  --background: #f9fafb;
+  --foreground: #111827;
+  --surface: #f3f4f6;
+  --surface-strong: #e5e7eb;
+  --border: #dfe3ea;
+  --accent-800: #111827;
+  --accent-700: #111827;
+  --accent-600: #111827;
+  --accent-500: #111827;
+  --accent-400: #6b7280;
+  --accent-300: #9ca3af;
+  --accent-soft: #f3f4f6;
+  --accent-soft-strong: #e5e7eb;
+  --accent-ring: rgba(156, 163, 175, 0.55);
+}
+
+:root[data-theme="light"][data-accent="cyan_tech"] {
+  --background: #ecfeff;
+  --foreground: #12343e;
+  --surface: #cffafe;
+  --surface-strong: #a5f3fc;
+  --border: #cceff3;
+  --accent-800: #0e7490;
+  --accent-700: #0e7490;
+  --accent-600: #0e7490;
+  --accent-500: #0e7490;
+  --accent-400: #22d3ee;
+  --accent-300: #67e8f9;
+  --accent-soft: #cffafe;
+  --accent-soft-strong: #a5f3fc;
+  --accent-ring: rgba(103, 232, 249, 0.58);
+}
+
+:root[data-theme="dark"][data-accent="modern_blue"] {
+  --background: #0b1120;
+  --foreground: #e8efff;
+  --surface: rgba(19, 31, 56, 0.78);
+  --surface-strong: rgba(24, 38, 67, 0.9);
+  --border: rgba(147, 170, 214, 0.38);
+  --accent-800: #1d4ed8;
+  --accent-700: #2563eb;
+  --accent-600: #3b82f6;
+  --accent-500: #60a5fa;
+  --accent-400: #93c5fd;
+  --accent-300: #bfdbfe;
+  --accent-soft: rgba(45, 74, 130, 0.42);
+  --accent-soft-strong: rgba(59, 99, 174, 0.56);
+  --accent-ring: rgba(96, 165, 250, 0.38);
+}
+
+:root[data-theme="dark"][data-accent="neon_purple"] {
+  --background: #0f0a1f;
+  --foreground: #efe8ff;
+  --surface: rgba(36, 24, 61, 0.78);
+  --surface-strong: rgba(45, 31, 74, 0.9);
+  --border: rgba(186, 158, 231, 0.4);
+  --accent-800: #7e22ce;
+  --accent-700: #9333ea;
+  --accent-600: #a855f7;
+  --accent-500: #c084fc;
+  --accent-400: #d8b4fe;
+  --accent-300: #e9d5ff;
+  --accent-soft: rgba(100, 59, 162, 0.42);
+  --accent-soft-strong: rgba(125, 73, 201, 0.56);
+  --accent-ring: rgba(168, 85, 247, 0.42);
+}
+
+:root[data-theme="dark"][data-accent="minimal_green"] {
+  --background: #052e16;
+  --foreground: #e7fff2;
+  --surface: rgba(10, 52, 30, 0.8);
+  --surface-strong: rgba(13, 66, 38, 0.9);
+  --border: rgba(133, 214, 165, 0.4);
+  --accent-800: #15803d;
+  --accent-700: #16a34a;
+  --accent-600: #22c55e;
+  --accent-500: #4ade80;
+  --accent-400: #86efac;
+  --accent-300: #bbf7d0;
+  --accent-soft: rgba(31, 102, 57, 0.44);
+  --accent-soft-strong: rgba(39, 129, 72, 0.56);
+  --accent-ring: rgba(34, 197, 94, 0.4);
+}
+
+:root[data-theme="dark"][data-accent="vibrant_orange"] {
+  --background: #1c0a00;
+  --foreground: #fff0e3;
+  --surface: rgba(61, 30, 13, 0.8);
+  --surface-strong: rgba(77, 38, 17, 0.9);
+  --border: rgba(242, 177, 135, 0.4);
+  --accent-800: #c2410c;
+  --accent-700: #ea580c;
+  --accent-600: #fb923c;
+  --accent-500: #fdba74;
+  --accent-400: #fed7aa;
+  --accent-300: #ffedd5;
+  --accent-soft: rgba(141, 75, 39, 0.42);
+  --accent-soft-strong: rgba(174, 91, 47, 0.56);
+  --accent-ring: rgba(251, 146, 60, 0.42);
+}
+
+:root[data-theme="dark"][data-accent="elegant_gray"] {
+  --background: #030712;
+  --foreground: #f2f4f8;
+  --surface: rgba(20, 28, 43, 0.8);
+  --surface-strong: rgba(26, 36, 55, 0.9);
+  --border: rgba(164, 175, 194, 0.4);
+  --accent-800: #6b7280;
+  --accent-700: #9ca3af;
+  --accent-600: #9ca3af;
+  --accent-500: #c0c7d2;
+  --accent-400: #d5dbe3;
+  --accent-300: #e5e7eb;
+  --accent-soft: rgba(74, 86, 109, 0.42);
+  --accent-soft-strong: rgba(97, 110, 136, 0.58);
+  --accent-ring: rgba(156, 163, 175, 0.42);
+}
+
+:root[data-theme="dark"][data-accent="cyan_tech"] {
+  --background: #042f2e;
+  --foreground: #e4fffd;
+  --surface: rgba(8, 59, 58, 0.8);
+  --surface-strong: rgba(10, 74, 72, 0.9);
+  --border: rgba(135, 226, 220, 0.4);
+  --accent-800: #0891b2;
+  --accent-700: #06b6d4;
+  --accent-600: #22d3ee;
+  --accent-500: #67e8f9;
+  --accent-400: #a5f3fc;
+  --accent-300: #cffafe;
+  --accent-soft: rgba(28, 126, 124, 0.42);
+  --accent-soft-strong: rgba(36, 154, 151, 0.58);
+  --accent-ring: rgba(34, 211, 238, 0.42);
+}
+
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at 10% 8%, color-mix(in srgb, var(--accent-500) 30%, transparent), transparent 40%),
+    radial-gradient(circle at 90% 14%, color-mix(in srgb, var(--accent-300) 20%, transparent), transparent 46%),
+    linear-gradient(145deg, color-mix(in srgb, var(--background) 86%, #0b1020 14%) 0%, var(--background) 100%);
+  background-attachment: fixed;
+  color: var(--foreground);
+
+  --glass-saturation: 168%;
+  --glass-l1-bg: rgba(12, 21, 40, 0.52);
+  --glass-l2-bg: rgba(12, 21, 40, 0.46);
+  --glass-l3-bg: rgba(12, 21, 40, 0.4);
+  --glass-l1-border: rgba(226, 232, 240, 0.38);
+  --glass-l2-border: rgba(226, 232, 240, 0.32);
+  --glass-l3-border: rgba(226, 232, 240, 0.28);
+  --glass-highlight: rgba(255, 255, 255, 0.22);
+  --glass-shadow-soft: 0 10px 28px rgba(2, 6, 23, 0.35);
+  --glass-shadow-md: 0 22px 52px rgba(2, 6, 23, 0.44);
+  --glass-shadow-lg: 0 34px 92px rgba(2, 6, 23, 0.56);
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(420px 260px at 14% 18%, color-mix(in srgb, var(--accent-500) 42%, transparent), transparent 72%),
+    radial-gradient(340px 220px at 24% 82%, color-mix(in srgb, var(--accent-400) 36%, transparent), transparent 74%),
+    radial-gradient(440px 260px at 84% 76%, color-mix(in srgb, var(--accent-300) 28%, transparent), transparent 76%);
+  filter: blur(20px);
+}
+
+.glass,
+.glass-l1,
+.glass-l2,
+.glass-l3,
+.glass-soft,
+.glass-surface,
+.glass-panel {
+  position: relative;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.glass::before,
+.glass-l1::before,
+.glass-l2::before,
+.glass-l3::before,
+.glass-soft::before,
+.glass-surface::before,
+.glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--glass-highlight) 48%, transparent) 0%, transparent 44%),
+    radial-gradient(160% 80% at 18% 0%, color-mix(in srgb, var(--glass-highlight) 24%, transparent), transparent 55%);
+}
+
+.glass-l1,
+.glass-soft,
+.glass-panel {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--glass-l1-bg) 88%, transparent) 0%,
+    color-mix(in srgb, var(--glass-l2-bg) 76%, transparent) 100%
+  );
+  border-color: var(--glass-l1-border);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 70%, transparent), var(--glass-shadow-soft);
+  backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur-sm));
+  -webkit-backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur-sm));
+}
+
+.glass-l2,
+.glass-surface {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--glass-l2-bg) 88%, transparent) 0%,
+    color-mix(in srgb, var(--glass-l3-bg) 72%, transparent) 100%
+  );
+  border-color: var(--glass-l2-border);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 75%, transparent), var(--glass-shadow-md);
+  backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur-md));
+  -webkit-backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur-md));
+}
+
+.glass-l3 {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--glass-l3-bg) 94%, transparent) 0%,
+    color-mix(in srgb, var(--glass-l2-bg) 70%, transparent) 100%
+  );
+  border-color: var(--glass-l3-border);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 82%, transparent), var(--glass-shadow-lg);
+  backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur-lg));
+  -webkit-backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur-lg));
+}
+
+.ui-control,
+.field-input,
+.cal-btn {
+  border: 1px solid color-mix(in srgb, var(--glass-l1-border) 76%, var(--border) 24%);
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--glass-l1-bg) 86%, transparent);
+  color: color-mix(in srgb, var(--foreground) 90%, #475569 10%);
+  outline: none;
+  backdrop-filter: saturate(calc(var(--glass-saturation) - 10%)) blur(calc(var(--glass-blur-sm) - 2px));
+  -webkit-backdrop-filter: saturate(calc(var(--glass-saturation) - 10%)) blur(calc(var(--glass-blur-sm) - 2px));
+}
+
+.ui-control,
+.field-input {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.cal-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.ui-control:focus,
+.field-input:focus,
+.cal-btn:focus {
+  border-color: var(--accent-400);
+  box-shadow: 0 0 0 2px var(--accent-ring);
+}
+
+.ui-control::placeholder,
+.field-input::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--foreground) 50%, #94a3b8 50%);
+}
+
+.ui-btn {
+  border-radius: 0.375rem;
+  border: 1px solid transparent;
+  font-weight: 600;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.ui-btn-primary {
+  background: var(--accent-600);
+  color: #ffffff;
+}
+
+.ui-btn-primary:hover {
+  background: var(--accent-500);
+}
+
+.ui-btn-ghost {
+  border-color: color-mix(in srgb, var(--glass-l2-border) 70%, var(--border) 30%);
+  background: color-mix(in srgb, var(--glass-l1-bg) 84%, transparent);
+  color: color-mix(in srgb, var(--foreground) 84%, #64748b 16%);
+  backdrop-filter: saturate(calc(var(--glass-saturation) - 14%)) blur(calc(var(--glass-blur-sm) - 2px));
+  -webkit-backdrop-filter: saturate(calc(var(--glass-saturation) - 14%)) blur(calc(var(--glass-blur-sm) - 2px));
+}
+
+.ui-btn-ghost:hover {
+  background: color-mix(in srgb, var(--glass-l1-bg) 68%, var(--accent-300) 32%);
+}
+
+.ui-icon-btn {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  border: 1px solid color-mix(in srgb, var(--glass-l2-border) 70%, var(--border) 30%);
+  background: color-mix(in srgb, var(--glass-l1-bg) 84%, transparent);
+  color: color-mix(in srgb, var(--foreground) 74%, #94a3b8 26%);
+  backdrop-filter: saturate(calc(var(--glass-saturation) - 14%)) blur(calc(var(--glass-blur-sm) - 2px));
+  -webkit-backdrop-filter: saturate(calc(var(--glass-saturation) - 14%)) blur(calc(var(--glass-blur-sm) - 2px));
+}
+
+.ui-icon-btn:hover {
+  background: color-mix(in srgb, var(--glass-l1-bg) 66%, var(--accent-300) 34%);
+}
+
+.ui-chip-btn {
+  border: 1px solid color-mix(in srgb, var(--glass-l2-border) 68%, var(--border) 32%);
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--glass-l1-bg) 82%, transparent);
+  color: color-mix(in srgb, var(--foreground) 80%, #64748b 20%);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.625rem;
+  backdrop-filter: saturate(calc(var(--glass-saturation) - 15%)) blur(calc(var(--glass-blur-sm) - 2px));
+  -webkit-backdrop-filter: saturate(calc(var(--glass-saturation) - 15%)) blur(calc(var(--glass-blur-sm) - 2px));
+}
+
+.ui-chip-btn:hover {
+  background: color-mix(in srgb, var(--glass-l1-bg) 64%, var(--accent-300) 36%);
+}
+
+.task-overlay {
+  background:
+    radial-gradient(760px 480px at 14% 12%, color-mix(in srgb, var(--accent-500) 16%, transparent), transparent 70%),
+    radial-gradient(700px 420px at 86% 84%, color-mix(in srgb, var(--accent-300) 12%, transparent), transparent 72%),
+    linear-gradient(165deg, rgba(15, 23, 42, 0.56) 0%, rgba(15, 23, 42, 0.72) 100%);
+  backdrop-filter: saturate(108%) blur(10px);
+  -webkit-backdrop-filter: saturate(108%) blur(10px);
+}
+
+:root[data-theme="dark"] .task-overlay {
+  background:
+    radial-gradient(760px 480px at 14% 12%, color-mix(in srgb, var(--accent-500) 20%, transparent), transparent 70%),
+    radial-gradient(700px 420px at 86% 84%, color-mix(in srgb, var(--accent-300) 16%, transparent), transparent 72%),
+    linear-gradient(165deg, rgba(2, 6, 23, 0.72) 0%, rgba(2, 6, 23, 0.84) 100%);
+}
+
+.task-drawer {
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-strong) 94%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 92%, transparent) 100%
+    );
+  border-color: color-mix(in srgb, var(--glass-l1-border) 82%, var(--border) 18%) !important;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 76%, transparent), var(--glass-shadow-lg);
+  backdrop-filter: saturate(120%) blur(8px);
+  -webkit-backdrop-filter: saturate(120%) blur(8px);
+}
+
+.task-drawer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(560px 260px at 8% 0%, color-mix(in srgb, var(--accent-400) 10%, transparent), transparent 74%),
+    radial-gradient(460px 250px at 92% 108%, color-mix(in srgb, var(--accent-300) 8%, transparent), transparent 76%),
+    linear-gradient(180deg, color-mix(in srgb, var(--glass-highlight) 36%, transparent) 0%, transparent 34%);
+}
+
+.task-drawer .bg-white,
+.task-drawer .bg-slate-50 {
+  background: color-mix(in srgb, var(--surface-strong) 95%, transparent) !important;
+  border-color: color-mix(in srgb, var(--glass-l2-border) 70%, var(--border) 30%) !important;
+}
+
+.task-drawer .glass-l1,
+.task-drawer .glass-soft,
+.task-drawer .glass-l2 {
+  background: color-mix(in srgb, var(--surface-strong) 94%, transparent) !important;
+  border-color: color-mix(in srgb, var(--glass-l2-border) 66%, var(--border) 34%) !important;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 52%, transparent), 0 6px 14px rgba(15, 23, 42, 0.08) !important;
+  backdrop-filter: saturate(110%) blur(4px) !important;
+  -webkit-backdrop-filter: saturate(110%) blur(4px) !important;
+}
+
+.task-drawer .glass-l1::before,
+.task-drawer .glass-soft::before,
+.task-drawer .glass-l2::before {
+  opacity: 0.3;
+}
+
+.task-drawer input:not([type="checkbox"]):not([type="radio"]),
+.task-drawer select,
+.task-drawer textarea,
+.task-drawer .field-input {
+  background: color-mix(in srgb, var(--surface-strong) 97%, transparent) !important;
+  border-color: color-mix(in srgb, var(--glass-l2-border) 74%, var(--border) 26%) !important;
+  color: var(--foreground) !important;
+}
+
+.task-drawer .ui-btn-ghost {
+  background: color-mix(in srgb, var(--surface-strong) 95%, transparent);
+  border-color: color-mix(in srgb, var(--glass-l2-border) 70%, var(--border) 30%);
+}
+
+.topbar-layer {
+  position: relative;
+  z-index: 90;
+  overflow: visible !important;
+}
+
+.theme-palette-popover {
+  isolation: isolate;
+  min-width: max-content;
+}
+
+:root[data-theme="dark"] .app-shell .text-slate-900,
+:root[data-theme="dark"] .app-shell .text-slate-800,
+:root[data-theme="dark"] .app-shell .text-slate-700 {
+  color: var(--foreground) !important;
+}
+
+:root[data-theme="dark"] .app-shell .text-slate-600,
+:root[data-theme="dark"] .app-shell .text-slate-500 {
+  color: color-mix(in srgb, var(--foreground) 78%, #94a3b8 22%) !important;
+}
+
+:root[data-theme="dark"] .app-shell input,
+:root[data-theme="dark"] .app-shell select,
+:root[data-theme="dark"] .app-shell textarea {
+  color-scheme: dark;
+}
+
+@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+  .glass,
+  .glass-l1,
+  .glass-l2,
+  .glass-l3,
+  .glass-soft,
+  .glass-surface,
+  .glass-panel,
+  .ui-control,
+  .field-input,
+  .cal-btn,
+  .ui-btn-ghost,
+  .ui-icon-btn,
+  .ui-chip-btn,
+  .task-overlay,
+  .task-drawer {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .glass-l1,
+  .glass-soft,
+  .glass-panel {
+    background: color-mix(in srgb, var(--surface) 94%, #ffffff 6%);
+    border-color: color-mix(in srgb, var(--border) 88%, #ffffff 12%);
+  }
+
+  .glass-l2,
+  .glass-surface {
+    background: color-mix(in srgb, var(--surface-strong) 94%, #ffffff 6%);
+    border-color: color-mix(in srgb, var(--border) 84%, #ffffff 16%);
+  }
+
+  .glass-l3,
+  .task-drawer {
+    background: color-mix(in srgb, var(--surface-strong) 96%, #ffffff 4%);
+    border-color: color-mix(in srgb, var(--border) 86%, #ffffff 14%);
+  }
+
+  .ui-control,
+  .field-input,
+  .cal-btn,
+  .ui-btn-ghost,
+  .ui-icon-btn,
+  .ui-chip-btn {
+    background: color-mix(in srgb, var(--surface) 96%, #ffffff 4%);
+    border-color: color-mix(in srgb, var(--border) 86%, #ffffff 14%);
+  }
+
+  .task-overlay {
+    background: linear-gradient(165deg, rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0.62));
+  }
+}
