@@ -4,6 +4,7 @@
 export const STORAGE_KEY = "agiliza-ai-workspace-v2";
 export const THEME_KEY = "agiliza-ai-theme-v1";
 export const ACCENT_KEY = "agiliza-ai-accent-v1";
+export const UI_PREFS_KEY = "agiliza-ai-ui-prefs-v1";
 
 // Opções globais usadas em vários controles.
 export const members = ["Raphael", "Ana", "Bruno", "Camila", "Diego"];

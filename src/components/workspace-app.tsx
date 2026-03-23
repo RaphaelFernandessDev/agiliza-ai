@@ -24,6 +24,7 @@ import {
   TimelineView,
   todayIso,
   TopBar,
+  UI_PREFS_KEY,
 } from "@/components/workspace";
 import type {
   AccentMode,
@@ -40,6 +41,16 @@ import type {
   WorkspaceState,
 } from "@/components/workspace";
 export default function Home() {
+  type SortMode = "updated_desc" | "due_asc" | "priority_desc" | "title_asc";
+  type UiPrefs = {
+    viewMode: ViewMode;
+    statusFilter: "all" | TaskStatus;
+    quickFilter: QuickFilter;
+    markerFilter: "all" | MarkerTone;
+    listGroupBy: ListGroupBy;
+    sortMode: SortMode;
+  };
+
   // Estado principal do workspace e preferências de visualização.
   const [workspace, setWorkspace] = useState<WorkspaceState>(initialWorkspace);
   const [storageReady, setStorageReady] = useState(false);
@@ -50,6 +61,7 @@ export default function Home() {
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
   const [markerFilter, setMarkerFilter] = useState<"all" | MarkerTone>("all");
   const [listGroupBy, setListGroupBy] = useState<ListGroupBy>("status");
+  const [sortMode, setSortMode] = useState<SortMode>("updated_desc");
   const [collapsedListGroups, setCollapsedListGroups] = useState<Record<string, boolean>>({});
   const [selectedTaskId, setSelectedTaskId] = useState("");
   const [draggedTaskId, setDraggedTaskId] = useState("");
@@ -130,6 +142,15 @@ export default function Home() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSelectedTaskId("");
       if (
+        event.key.toLowerCase() === "n" &&
+        document.activeElement &&
+        !["INPUT", "TEXTAREA", "SELECT"].includes((document.activeElement as HTMLElement).tagName)
+      ) {
+        event.preventDefault();
+        setViewMode("board");
+        quickTaskInputRef.current?.focus();
+      }
+      if (
         event.key === "/" &&
         document.activeElement &&
         !["INPUT", "TEXTAREA", "SELECT"].includes((document.activeElement as HTMLElement).tagName)
@@ -146,10 +167,55 @@ export default function Home() {
     const byId = workspace.projects.find((project) => project.id === workspace.activeProjectId);
     return byId ?? workspace.projects[0] ?? null;
   }, [workspace]);
+  const activeProjectId = activeProject?.id ?? "";
+
+  // Carrega preferências de uso por projeto para melhorar continuidade.
+  useEffect(() => {
+    if (!activeProjectId) return;
+    const rawPrefs = window.localStorage.getItem(UI_PREFS_KEY);
+    if (!rawPrefs) return;
+    try {
+      const parsed = JSON.parse(rawPrefs) as Record<string, Partial<UiPrefs>>;
+      const prefs = parsed[activeProjectId];
+      if (!prefs) return;
+      if (prefs.viewMode) setViewMode(prefs.viewMode);
+      if (prefs.statusFilter) setStatusFilter(prefs.statusFilter);
+      if (prefs.quickFilter) setQuickFilter(prefs.quickFilter);
+      if (prefs.markerFilter) setMarkerFilter(prefs.markerFilter);
+      if (prefs.listGroupBy) setListGroupBy(prefs.listGroupBy);
+      if (prefs.sortMode) setSortMode(prefs.sortMode);
+    } catch {
+      window.localStorage.removeItem(UI_PREFS_KEY);
+    }
+  }, [activeProjectId]);
+
+  // Persiste preferências de uso por projeto.
+  useEffect(() => {
+    if (!activeProjectId) return;
+    const rawPrefs = window.localStorage.getItem(UI_PREFS_KEY);
+    let parsed: Record<string, Partial<UiPrefs>> = {};
+    if (rawPrefs) {
+      try {
+        parsed = JSON.parse(rawPrefs) as Record<string, Partial<UiPrefs>>;
+      } catch {
+        parsed = {};
+      }
+    }
+    parsed[activeProjectId] = {
+      viewMode,
+      statusFilter,
+      quickFilter,
+      markerFilter,
+      listGroupBy,
+      sortMode,
+    };
+    window.localStorage.setItem(UI_PREFS_KEY, JSON.stringify(parsed));
+  }, [activeProjectId, listGroupBy, markerFilter, quickFilter, sortMode, statusFilter, viewMode]);
 
   const filteredTasks = useMemo(() => {
     if (!activeProject) return [];
-    return activeProject.tasks.filter((task) => {
+    const priorityOrder: Record<TaskPriority, number> = { high: 3, medium: 2, low: 1 };
+    const tasks = activeProject.tasks.filter((task) => {
       const matchesQuery =
         query.trim().length === 0 ||
         task.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -166,7 +232,18 @@ export default function Home() {
       const matchesMarker = markerFilter === "all" || task.marker === markerFilter;
       return matchesQuery && matchesStatus && matchesArea && matchesQuickFilter && matchesMarker;
     });
-  }, [activeProject, query, statusFilter, appArea, quickFilter, markerFilter]);
+    return tasks.sort((a, b) => {
+      if (sortMode === "title_asc") return a.title.localeCompare(b.title, "pt-BR");
+      if (sortMode === "priority_desc") return priorityOrder[b.priority] - priorityOrder[a.priority];
+      if (sortMode === "due_asc") {
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return a.dueDate.localeCompare(b.dueDate);
+      }
+      return b.updatedAt.localeCompare(a.updatedAt);
+    });
+  }, [activeProject, query, statusFilter, appArea, quickFilter, markerFilter, sortMode]);
 
   const selectedTask = useMemo(() => {
     if (!activeProject) return null;
@@ -501,6 +578,18 @@ export default function Home() {
                 <div className="ml-auto flex min-w-[220px] items-center gap-2 max-sm:w-full">
                   <input ref={searchInputRef} className="ui-control w-full" placeholder="Buscar por titulo, descricao ou etiqueta (/)" value={query} onChange={(event) => setQuery(event.target.value)} />
                   <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "all" | TaskStatus)} className="ui-control"><option value="all">Todos</option>{statusOptions.map((status) => <option key={status} value={status}>{statusMeta[status].label}</option>)}</select>
+                  <select
+                    value={sortMode}
+                    onChange={(event) => setSortMode(event.target.value as "updated_desc" | "due_asc" | "priority_desc" | "title_asc")}
+                    className="ui-control"
+                    aria-label="Ordenar tarefas"
+                    title="Ordenar tarefas"
+                  >
+                    <option value="updated_desc">Mais recentes</option>
+                    <option value="due_asc">Prazo crescente</option>
+                    <option value="priority_desc">Prioridade</option>
+                    <option value="title_asc">Titulo A-Z</option>
+                  </select>
                 </div>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-1.5">

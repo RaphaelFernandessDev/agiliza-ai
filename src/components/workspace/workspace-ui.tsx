@@ -96,22 +96,39 @@ export function TopBar({
               Cores
             </button>
             {showColors ? (
-              <div className="theme-palette-popover glass-surface absolute right-0 top-full z-[220] mt-2 flex items-center gap-2 rounded-xl border border-slate-200 p-2 shadow-xl">
-                {accents.map((accent) => (
-                  <button
-                    key={accent}
-                    type="button"
-                    onClick={() => {
-                      onAccentChange(accent);
-                      setShowColors(false);
-                    }}
-                    className={`h-5 w-5 rounded-full border-2 transition ${accentDot[accent]} ${
-                      accentMode === accent ? "border-slate-900 scale-105" : "border-white hover:scale-105"
-                    }`}
-                    aria-label={`Paleta ${accentName[accent]}`}
-                    title={accentName[accent]}
-                  />
-                ))}
+              <div className="theme-palette-popover glass-surface absolute right-0 top-full z-[220] mt-2 w-[260px] rounded-2xl border border-slate-200 p-3 shadow-xl">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                  Paleta do workspace
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {accents.map((accent) => {
+                    const active = accentMode === accent;
+                    return (
+                      <button
+                        key={accent}
+                        type="button"
+                        onClick={() => {
+                          onAccentChange(accent);
+                          setShowColors(false);
+                        }}
+                        className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-xs transition ${
+                          active
+                            ? "border-[var(--accent-300)] bg-[var(--accent-soft)] text-[var(--accent-800)]"
+                            : "border-slate-300/70 hover:bg-slate-100/70"
+                        }`}
+                        aria-label={`Paleta ${accentName[accent]}`}
+                        title={accentName[accent]}
+                      >
+                        <span
+                          className={`h-4 w-4 rounded-full border ${accentDot[accent]} ${
+                            active ? "border-slate-900/40" : "border-white/80"
+                          }`}
+                        />
+                        <span className="truncate">{accentName[accent]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             ) : null}
           </div>
