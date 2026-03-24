@@ -934,6 +934,51 @@ textarea::placeholder {
   color: #e5e7eb;
 }
 
+.top-panel-popover {
+  isolation: isolate;
+}
+
+.top-panel-shell {
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-strong) 96%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 92%, transparent) 100%
+    ) !important;
+  border-color: color-mix(in srgb, var(--glass-l1-border) 78%, var(--border) 22%) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 60%, transparent),
+    0 22px 52px rgba(2, 6, 23, 0.34) !important;
+  backdrop-filter: saturate(120%) blur(10px) !important;
+  -webkit-backdrop-filter: saturate(120%) blur(10px) !important;
+}
+
+.top-panel-header {
+  background:
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--surface-strong) 98%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 92%, transparent) 100%
+    ) !important;
+}
+
+.top-panel-body {
+  padding-top: 0.7rem !important;
+}
+
+:root[data-theme="dark"] .top-panel-shell {
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-strong) 90%, #020617 10%) 0%,
+      color-mix(in srgb, var(--surface) 84%, #020617 16%) 100%
+    ) !important;
+  border-color: color-mix(in srgb, var(--glass-l1-border) 72%, #e2e8f0 28%) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 44%, transparent),
+    0 24px 62px rgba(2, 6, 23, 0.54) !important;
+}
+
 .theme-palette-popover::before {
   opacity: 0.18;
 }

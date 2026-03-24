@@ -45,9 +45,9 @@ export function normalizeMentionHandle(value: string): string {
 }
 
 // Extrai menções válidas no formato @Nome.
-export function extractMentions(text: string): string[] {
+export function extractMentions(text: string, availableMembers: string[] = members): string[] {
   const mentionTokens = text.match(/@[A-Za-zÀ-ÿ0-9_]+/g) ?? [];
-  const byHandle = new Map(members.map((member) => [normalizeMentionHandle(member), member]));
+  const byHandle = new Map(availableMembers.map((member) => [normalizeMentionHandle(member), member]));
   const resolved = mentionTokens
     .map((token) => token.slice(1))
     .map((handle) => byHandle.get(normalizeMentionHandle(handle)))
@@ -57,8 +57,28 @@ export function extractMentions(text: string): string[] {
 
 // Garante esquema compatível com a versão atual da aplicação.
 export function normalizeWorkspace(input: WorkspaceState): WorkspaceState {
+  const users = Array.isArray(input.users)
+    ? input.users.map((user) => ({ ...user, password: user.password ?? "agiliza123" }))
+    : members.map((name, index) => ({
+        id: `user-seed-${index + 1}`,
+        name,
+        email: `${normalizeMentionHandle(name)}@agiliza.ai`,
+        password: "agiliza123",
+        role: index === 0 ? ("owner" as const) : ("member" as const),
+        active: true,
+      }));
+  const teams = Array.isArray(input.teams) ? input.teams : [];
+  const inbox = Array.isArray(input.inbox) ? input.inbox : [];
+  const helpCenter = Array.isArray(input.helpCenter) ? input.helpCenter : [];
+  const currentUserId = input.currentUserId ?? users[0]?.id ?? "";
+
   return {
     ...input,
+    users,
+    teams,
+    inbox,
+    helpCenter,
+    currentUserId,
     projects: input.projects.map((project) => ({
       ...project,
       tasks: project.tasks.map((task) => {
@@ -67,7 +87,7 @@ export function normalizeWorkspace(input: WorkspaceState): WorkspaceState {
         const comments = Array.isArray(task.comments)
           ? task.comments.map((comment) => ({
               ...comment,
-              mentions: Array.isArray(comment.mentions) ? comment.mentions : extractMentions(comment.text ?? ""),
+              mentions: Array.isArray(comment.mentions) ? comment.mentions : extractMentions(comment.text ?? "", users.map((user) => user.name)),
             }))
           : [];
         const activity = Array.isArray(task.activity) ? task.activity : [];

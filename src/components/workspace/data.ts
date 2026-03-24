@@ -3,6 +3,66 @@
 // Estado inicial do workspace para primeiro acesso.
 export const initialWorkspace: WorkspaceState = {
   activeProjectId: "proj-ops",
+  currentUserId: "user-raphael",
+  users: [
+    { id: "user-raphael", name: "Raphael", email: "raphael@agiliza.ai", password: "agiliza123", role: "owner", active: true },
+    { id: "user-ana", name: "Ana", email: "ana@agiliza.ai", password: "agiliza123", role: "admin", active: true },
+    { id: "user-bruno", name: "Bruno", email: "bruno@agiliza.ai", password: "agiliza123", role: "member", active: true },
+    { id: "user-camila", name: "Camila", email: "camila@agiliza.ai", password: "agiliza123", role: "member", active: true },
+    { id: "user-diego", name: "Diego", email: "diego@agiliza.ai", password: "agiliza123", role: "viewer", active: true },
+  ],
+  teams: [
+    {
+      id: "team-ops",
+      name: "Operacoes",
+      description: "Time responsavel por suporte e fluxo diario.",
+      memberIds: ["user-raphael", "user-ana", "user-bruno"],
+    },
+    {
+      id: "team-prod",
+      name: "Produto",
+      description: "Planejamento, UX e entrega do roadmap.",
+      memberIds: ["user-raphael", "user-camila", "user-diego"],
+    },
+  ],
+  inbox: [
+    {
+      id: "inbox-1",
+      title: "Mencao em tarefa",
+      description: "Ana mencionou voce em \"Refinar playbook de atendimento\".",
+      createdAt: "2026-03-23",
+      read: false,
+      kind: "mention",
+    },
+    {
+      id: "inbox-2",
+      title: "Prazo proximo",
+      description: "\"Consolidar dashboard semanal\" vence amanha.",
+      createdAt: "2026-03-23",
+      read: false,
+      kind: "deadline",
+    },
+  ],
+  helpCenter: [
+    {
+      id: "help-1",
+      title: "Como criar tarefas rapidamente",
+      content: "Use o campo \"Nova tarefa\" no topo do board e preencha prioridade, prazo e responsavel.",
+      category: "tasks",
+    },
+    {
+      id: "help-2",
+      title: "Como organizar times e usuarios",
+      content: "Abra o menu de perfil e utilize \"Gestao de time\" para cadastrar membros e criar times.",
+      category: "teams",
+    },
+    {
+      id: "help-3",
+      title: "Primeiros passos",
+      content: "Crie um projeto, adicione tarefas no backlog e mova entre colunas conforme o progresso.",
+      category: "getting_started",
+    },
+  ],
   projects: [
     {
       id: "proj-ops",

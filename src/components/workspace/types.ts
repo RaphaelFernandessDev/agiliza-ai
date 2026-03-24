@@ -28,6 +28,38 @@ export type TaskComment = {
   mentions: string[];
 };
 
+export type WorkspaceUser = {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: "owner" | "admin" | "member" | "viewer";
+  active: boolean;
+};
+
+export type WorkspaceTeam = {
+  id: string;
+  name: string;
+  description: string;
+  memberIds: string[];
+};
+
+export type InboxItem = {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  read: boolean;
+  kind: "mention" | "deadline" | "system";
+};
+
+export type HelpArticle = {
+  id: string;
+  title: string;
+  content: string;
+  category: "getting_started" | "tasks" | "teams" | "automation";
+};
+
 export type Task = {
   id: string;
   title: string;
@@ -57,5 +89,10 @@ export type Project = {
 export type WorkspaceState = {
   projects: Project[];
   activeProjectId: string;
+  users: WorkspaceUser[];
+  teams: WorkspaceTeam[];
+  inbox: InboxItem[];
+  helpCenter: HelpArticle[];
+  currentUserId: string;
 };
 

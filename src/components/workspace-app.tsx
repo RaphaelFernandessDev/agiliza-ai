@@ -3,6 +3,7 @@
 import { FormEvent, Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   ACCENT_KEY,
+  AUTH_SESSION_KEY,
   CalendarView,
   CommentText,
   extractMentions,
@@ -10,7 +11,6 @@ import {
   initialWorkspace,
   markerMeta,
   markerOptions,
-  members,
   normalizeWorkspace,
   priorityMeta,
   QuickDateField,
@@ -29,6 +29,7 @@ import {
 import type {
   AccentMode,
   AppArea,
+  InboxItem,
   ListGroupBy,
   MarkerTone,
   Project,
@@ -69,12 +70,27 @@ export default function Home() {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>("medium");
   const [newTaskDueDate, setNewTaskDueDate] = useState("");
-  const [newTaskAssignee, setNewTaskAssignee] = useState(members[0]);
+  const [newTaskAssignee, setNewTaskAssignee] = useState(initialWorkspace.users[0]?.name ?? "Raphael");
   const [newTaskMarker, setNewTaskMarker] = useState<MarkerTone>("none");
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [newCommentText, setNewCommentText] = useState("");
   const [taskWarning, setTaskWarning] = useState("");
   const [newProjectName, setNewProjectName] = useState("");
+  const [topPanel, setTopPanel] = useState<"inbox" | "help" | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [helpQuery, setHelpQuery] = useState("");
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"admin" | "member" | "viewer">("member");
+  const [newTeamName, setNewTeamName] = useState("");
+  const [newTeamDescription, setNewTeamDescription] = useState("");
+  const [newTeamMembers, setNewTeamMembers] = useState<string[]>([]);
+  const [projectToRemoveId, setProjectToRemoveId] = useState<string | null>(null);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [newUserPassword, setNewUserPassword] = useState("agiliza123");
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -106,6 +122,32 @@ export default function Home() {
     if (!storageReady) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(workspace));
   }, [workspace, storageReady]);
+
+  // Recupera sessão de autenticação local (email/senha já validado).
+  useEffect(() => {
+    if (!storageReady) return;
+    const savedUserId = window.localStorage.getItem(AUTH_SESSION_KEY);
+    if (!savedUserId) {
+      setIsAuthenticated(false);
+      return;
+    }
+    const sessionUser = workspace.users.find((user) => user.id === savedUserId && user.active);
+    if (!sessionUser) {
+      window.localStorage.removeItem(AUTH_SESSION_KEY);
+      setIsAuthenticated(false);
+      return;
+    }
+    setWorkspace((current) => ({ ...current, currentUserId: sessionUser.id }));
+    setLoginEmail(sessionUser.email);
+    setIsAuthenticated(true);
+  }, [storageReady, workspace.users]);
+
+  useEffect(() => {
+    if (!storageReady || isAuthenticated) return;
+    if (loginEmail) return;
+    const defaultEmail = workspace.users[0]?.email ?? "";
+    if (defaultEmail) setLoginEmail(defaultEmail);
+  }, [storageReady, isAuthenticated, loginEmail, workspace.users]);
 
   // Carrega preferências de tema e paleta.
   useEffect(() => {
@@ -168,6 +210,14 @@ export default function Home() {
     return byId ?? workspace.projects[0] ?? null;
   }, [workspace]);
   const activeProjectId = activeProject?.id ?? "";
+  const workspaceMembers = useMemo(
+    () => workspace.users.filter((user) => user.active).map((user) => user.name),
+    [workspace.users],
+  );
+  const currentUser = useMemo(
+    () => workspace.users.find((user) => user.id === workspace.currentUserId) ?? workspace.users[0] ?? null,
+    [workspace.currentUserId, workspace.users],
+  );
 
   // Carrega preferências de uso por projeto para melhorar continuidade.
   useEffect(() => {
@@ -212,6 +262,13 @@ export default function Home() {
     window.localStorage.setItem(UI_PREFS_KEY, JSON.stringify(parsed));
   }, [activeProjectId, listGroupBy, markerFilter, quickFilter, sortMode, statusFilter, viewMode]);
 
+  useEffect(() => {
+    if (!workspaceMembers.length) return;
+    if (!workspaceMembers.includes(newTaskAssignee)) {
+      setNewTaskAssignee(workspaceMembers[0]);
+    }
+  }, [workspaceMembers, newTaskAssignee]);
+
   const filteredTasks = useMemo(() => {
     if (!activeProject) return [];
     const priorityOrder: Record<TaskPriority, number> = { high: 3, medium: 2, low: 1 };
@@ -222,7 +279,7 @@ export default function Home() {
         task.description.toLowerCase().includes(query.toLowerCase()) ||
         task.labels.join(" ").toLowerCase().includes(query.toLowerCase());
       const matchesStatus = statusFilter === "all" || task.status === statusFilter;
-      const matchesArea = appArea !== "my_tasks" || task.assignee === "Raphael";
+      const matchesArea = appArea !== "my_tasks" || task.assignee === (currentUser?.name ?? "Raphael");
       const isOverdue = !!task.dueDate && task.dueDate < todayIso() && task.status !== "done";
       const matchesQuickFilter =
         quickFilter === "all" ||
@@ -243,7 +300,7 @@ export default function Home() {
       }
       return b.updatedAt.localeCompare(a.updatedAt);
     });
-  }, [activeProject, query, statusFilter, appArea, quickFilter, markerFilter, sortMode]);
+  }, [activeProject, query, statusFilter, appArea, quickFilter, markerFilter, sortMode, currentUser?.name]);
 
   const selectedTask = useMemo(() => {
     if (!activeProject) return null;
@@ -258,6 +315,21 @@ export default function Home() {
     const highOpen = filteredTasks.filter((task) => task.priority === "high" && task.status !== "done").length;
     return { total, done, dueToday, highOpen };
   }, [activeProject, filteredTasks]);
+  const unreadInboxCount = useMemo(() => workspace.inbox.filter((item) => !item.read).length, [workspace.inbox]);
+  const filteredHelpArticles = useMemo(() => {
+    const queryText = helpQuery.trim().toLowerCase();
+    if (!queryText) return workspace.helpCenter;
+    return workspace.helpCenter.filter(
+      (article) =>
+        article.title.toLowerCase().includes(queryText) ||
+        article.content.toLowerCase().includes(queryText) ||
+        article.category.toLowerCase().includes(queryText),
+    );
+  }, [helpQuery, workspace.helpCenter]);
+  const projectToRemove = useMemo(
+    () => workspace.projects.find((project) => project.id === projectToRemoveId) ?? null,
+    [workspace.projects, projectToRemoveId],
+  );
 
   const aiSuggestion = useMemo(() => {
     if (!activeProject) return "Sem projeto ativo.";
@@ -284,14 +356,14 @@ export default function Home() {
         tasks: filteredTasks.filter((task) => task.status === status),
       }));
     }
-    return members
+    return workspaceMembers
       .map((member) => ({
         key: `assignee:${member}`,
         label: member,
         tasks: filteredTasks.filter((task) => task.assignee === member),
       }))
       .filter((group) => group.tasks.length > 0 || filteredTasks.length === 0);
-  }, [filteredTasks, listGroupBy]);
+  }, [filteredTasks, listGroupBy, workspaceMembers]);
 
   // Aplica mutações apenas no projeto ativo.
   function withActiveProject(updater: (project: Project) => Project) {
@@ -336,8 +408,13 @@ export default function Home() {
     setNewTaskTitle("");
     setNewTaskDueDate("");
     setNewTaskPriority("medium");
-    setNewTaskAssignee(members[0]);
+    setNewTaskAssignee(workspaceMembers[0] ?? "Raphael");
     setNewTaskMarker("none");
+    appendInboxNotification(
+      "Nova tarefa criada",
+      `Card "${task.title}" criado no projeto "${activeProject?.name ?? "Projeto"}".`,
+      "system",
+    );
   }
 
   function createProject(event: FormEvent<HTMLFormElement>) {
@@ -353,6 +430,44 @@ export default function Home() {
     setWorkspace((current) => ({ ...current, activeProjectId: project.id, projects: [project, ...current.projects] }));
     setNewProjectName("");
     setSelectedTaskId("");
+    appendInboxNotification("Projeto criado", `Projeto "${project.name}" foi criado no workspace.`, "system");
+  }
+
+  function removeProject(projectId: string) {
+    if (workspace.projects.length <= 1) {
+      setTaskWarning("Voce precisa manter pelo menos um projeto no workspace.");
+      return;
+    }
+    const target = workspace.projects.find((project) => project.id === projectId);
+    if (!target) return;
+    setProjectToRemoveId(projectId);
+  }
+
+  function confirmRemoveProject() {
+    if (!projectToRemoveId) return;
+    if (workspace.projects.length <= 1) {
+      setTaskWarning("Voce precisa manter pelo menos um projeto no workspace.");
+      setProjectToRemoveId(null);
+      return;
+    }
+
+    const removedProjectName = projectToRemove?.name ?? "Projeto";
+    setWorkspace((current) => {
+      const remainingProjects = current.projects.filter((project) => project.id !== projectToRemoveId);
+      const nextActiveProjectId =
+        current.activeProjectId === projectToRemoveId
+          ? (remainingProjects[0]?.id ?? "")
+          : current.activeProjectId;
+      return {
+        ...current,
+        activeProjectId: nextActiveProjectId,
+        projects: remainingProjects,
+      };
+    });
+    setTaskWarning("");
+    setSelectedTaskId("");
+    setProjectToRemoveId(null);
+    appendInboxNotification("Projeto excluido", `Projeto "${removedProjectName}" foi removido do workspace.`, "system");
   }
 
   function updateTask(taskId: string, patch: Partial<Task>) {
@@ -407,6 +522,11 @@ export default function Home() {
     setTaskWarning("");
     updateTask(taskId, { status });
     appendActivity(taskId, `status alterado para ${statusMeta[status].label}`);
+    appendInboxNotification(
+      status === "done" ? "Tarefa concluida" : "Status atualizado",
+      `"${task.title}" foi movida para ${statusMeta[status].label}.`,
+      status === "done" ? "deadline" : "system",
+    );
   }
 
   function toggleTaskDone(task: Task) {
@@ -434,6 +554,8 @@ export default function Home() {
     }));
     setNewSubtaskTitle("");
     appendActivity(taskId, "subtarefa adicionada");
+    const taskName = activeProject?.tasks.find((task) => task.id === taskId)?.title ?? "Tarefa";
+    appendInboxNotification("Checklist atualizada", `Nova subtarefa adicionada em "${taskName}".`, "system");
   }
 
   function toggleSubtask(taskId: string, subtaskId: string) {
@@ -450,6 +572,8 @@ export default function Home() {
       ),
     }));
     appendActivity(taskId, "checklist atualizada");
+    const taskName = activeProject?.tasks.find((task) => task.id === taskId)?.title ?? "Tarefa";
+    appendInboxNotification("Checklist atualizada", `Item de checklist alterado em "${taskName}".`, "system");
   }
 
   function removeSubtask(taskId: string, subtaskId: string) {
@@ -462,19 +586,21 @@ export default function Home() {
       ),
     }));
     appendActivity(taskId, "subtarefa removida");
+    const taskName = activeProject?.tasks.find((task) => task.id === taskId)?.title ?? "Tarefa";
+    appendInboxNotification("Checklist atualizada", `Subtarefa removida de "${taskName}".`, "system");
   }
 
   function addComment(taskId: string) {
     const text = newCommentText.trim();
     if (!text) return;
-    const mentions = extractMentions(text);
+    const mentions = extractMentions(text, workspaceMembers);
     withActiveProject((project) => ({
       ...project,
       tasks: project.tasks.map((task) =>
         task.id === taskId
           ? {
               ...task,
-              comments: [{ id: crypto.randomUUID(), author: "Raphael", text, createdAt: todayIso(), mentions }, ...task.comments],
+              comments: [{ id: crypto.randomUUID(), author: currentUser?.name ?? "Raphael", text, createdAt: todayIso(), mentions }, ...task.comments],
               updatedAt: todayIso(),
             }
           : task,
@@ -482,6 +608,12 @@ export default function Home() {
     }));
     setNewCommentText("");
     appendActivity(taskId, mentions.length > 0 ? `comentario com mencao para ${mentions.join(", ")}` : "comentario adicionado");
+    const taskName = activeProject?.tasks.find((task) => task.id === taskId)?.title ?? "Tarefa";
+    if (mentions.length > 0) {
+      appendInboxNotification("Mencao em comentario", `Voce foi mencionado em "${taskName}" por ${currentUser?.name ?? "Usuario"}.`, "mention");
+      return;
+    }
+    appendInboxNotification("Novo comentario", `Comentario adicionado em "${taskName}".`, "system");
   }
 
   function duplicateTask(taskId: string) {
@@ -502,9 +634,11 @@ export default function Home() {
     };
     withActiveProject((project) => ({ ...project, tasks: [clone, ...project.tasks] }));
     setSelectedTaskId(clone.id);
+    appendInboxNotification("Tarefa duplicada", `Card "${source.title}" foi duplicado.`, "system");
   }
 
   function removeTask(taskId: string) {
+    const removedTaskName = activeProject?.tasks.find((task) => task.id === taskId)?.title ?? "Tarefa";
     withActiveProject((project) => ({
       ...project,
       tasks: project.tasks
@@ -512,6 +646,7 @@ export default function Home() {
         .map((task) => ({ ...task, blockedBy: task.blockedBy.filter((blockedId) => blockedId !== taskId) })),
     }));
     if (selectedTaskId === taskId) setSelectedTaskId("");
+    appendInboxNotification("Tarefa removida", `Card "${removedTaskName}" foi removido.`, "system");
   }
 
   function handleColumnDrop(status: TaskStatus) {
@@ -527,8 +662,169 @@ export default function Home() {
     setDropTargetStatus("");
   }
 
+  function markInboxAsRead(itemId: string) {
+    setWorkspace((current) => ({
+      ...current,
+      inbox: current.inbox.map((item) => (item.id === itemId ? { ...item, read: true } : item)),
+    }));
+  }
+
+  function markAllInboxAsRead() {
+    setWorkspace((current) => ({
+      ...current,
+      inbox: current.inbox.map((item) => ({ ...item, read: true })),
+    }));
+  }
+
+  function removeInboxItem(itemId: string) {
+    setWorkspace((current) => ({
+      ...current,
+      inbox: current.inbox.filter((item) => item.id !== itemId),
+    }));
+  }
+
+  function clearReadInboxItems() {
+    setWorkspace((current) => ({
+      ...current,
+      inbox: current.inbox.filter((item) => !item.read),
+    }));
+  }
+
+  function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const email = loginEmail.trim().toLowerCase();
+    const password = loginPassword;
+    const user = workspace.users.find(
+      (candidate) => candidate.active && candidate.email.toLowerCase() === email && candidate.password === password,
+    );
+    if (!user) {
+      setAuthError("Email ou senha invalidos.");
+      return;
+    }
+    setWorkspace((current) => ({ ...current, currentUserId: user.id }));
+    window.localStorage.setItem(AUTH_SESSION_KEY, user.id);
+    setAuthError("");
+    setIsAuthenticated(true);
+    setProfileOpen(false);
+    setTopPanel(null);
+    appendInboxNotification("Login realizado", `${user.name} acessou o workspace.`, "system");
+  }
+
+  function handleLogout() {
+    window.localStorage.removeItem(AUTH_SESSION_KEY);
+    setIsAuthenticated(false);
+    setProfileOpen(false);
+    setTopPanel(null);
+    setLoginPassword("");
+  }
+
+  function appendInboxNotification(title: string, description: string, kind: InboxItem["kind"] = "system") {
+    setWorkspace((current) => ({
+      ...current,
+      inbox: [
+        {
+          id: crypto.randomUUID(),
+          title,
+          description,
+          createdAt: todayIso(),
+          read: false,
+          kind,
+        },
+        ...current.inbox,
+      ].slice(0, 120),
+    }));
+  }
+
+  function createUser(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = newUserName.trim();
+    const email = newUserEmail.trim().toLowerCase();
+    if (!name || !email || !newUserPassword.trim()) return;
+    if (workspace.users.some((user) => user.email.toLowerCase() === email)) {
+      setTaskWarning("Ja existe um usuario com este e-mail.");
+      return;
+    }
+    setTaskWarning("");
+    const userId = crypto.randomUUID();
+    setWorkspace((current) => ({
+      ...current,
+      users: [...current.users, { id: userId, name, email, password: newUserPassword, role: newUserRole, active: true }],
+    }));
+    setNewUserName("");
+    setNewUserEmail("");
+    setNewUserPassword("agiliza123");
+    setNewUserRole("member");
+    appendInboxNotification("Usuario adicionado", `${name} foi adicionado ao workspace.`, "system");
+  }
+
+  function createTeam(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = newTeamName.trim();
+    if (!name) return;
+    setWorkspace((current) => ({
+      ...current,
+      teams: [
+        ...current.teams,
+        {
+          id: crypto.randomUUID(),
+          name,
+          description: newTeamDescription.trim(),
+          memberIds: newTeamMembers,
+        },
+      ],
+    }));
+    setNewTeamName("");
+    setNewTeamDescription("");
+    setNewTeamMembers([]);
+    appendInboxNotification("Time criado", `Time "${name}" foi criado com ${newTeamMembers.length} membro(s).`, "system");
+  }
+
+  function toggleTeamMemberSelection(userId: string) {
+    setNewTeamMembers((current) =>
+      current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId],
+    );
+  }
+
   if (!storageReady) {
     return <main className="flex min-h-screen w-full items-center justify-center px-4"><div className="glass-panel rounded-xl px-6 py-4 text-sm text-slate-600">Carregando workspace...</div></main>;
+  }
+  if (!isAuthenticated) {
+    return (
+      <main className="app-shell flex min-h-screen w-full items-center justify-center px-4">
+        <div className="task-drawer glass-l3 w-full max-w-[420px] rounded-2xl border border-slate-200 p-5 shadow-2xl">
+          <p className="task-modal-kicker">Agiliza Ai</p>
+          <h1 className="mt-1 text-2xl font-semibold text-slate-900">Entrar</h1>
+          <p className="mt-1 text-sm text-slate-600">Acesse com email e senha para abrir seu workspace.</p>
+          <form className="mt-4 space-y-3" onSubmit={handleLogin}>
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Email</label>
+              <input
+                type="email"
+                className="ui-control mt-1 w-full"
+                value={loginEmail}
+                onChange={(event) => setLoginEmail(event.target.value)}
+                placeholder="voce@agiliza.ai"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Senha</label>
+              <input
+                type="password"
+                className="ui-control mt-1 w-full"
+                value={loginPassword}
+                onChange={(event) => setLoginPassword(event.target.value)}
+                placeholder="Digite sua senha"
+              />
+            </div>
+            {authError ? <p className="rounded-lg border border-rose-300 bg-rose-50/70 px-3 py-2 text-xs text-rose-700">{authError}</p> : null}
+            <button type="submit" className="ui-btn ui-btn-primary w-full px-4 py-2 text-sm">Entrar</button>
+          </form>
+          <p className="mt-3 text-[11px] text-slate-500">
+            Demo inicial: use <span className="font-semibold">raphael@agiliza.ai</span> e senha <span className="font-semibold">agiliza123</span>.
+          </p>
+        </div>
+      </main>
+    );
   }
   if (!activeProject) {
     return <main className="flex min-h-screen w-full items-center justify-center px-4"><div className="glass-panel rounded-xl px-6 py-4 text-sm text-slate-700">Nenhum projeto disponivel.</div></main>;
@@ -547,7 +843,208 @@ export default function Home() {
             setViewMode("board");
             setTimeout(() => quickTaskInputRef.current?.focus(), 0);
           }}
+          onInboxClick={() => {
+            setTopPanel((current) => (current === "inbox" ? null : "inbox"));
+            setProfileOpen(false);
+          }}
+          onHelpClick={() => {
+            setTopPanel((current) => (current === "help" ? null : "help"));
+            setProfileOpen(false);
+          }}
+          onProfileClick={() => {
+            setProfileOpen((current) => !current);
+            setTopPanel(null);
+          }}
+          unreadInboxCount={unreadInboxCount}
+          currentUserInitials={(currentUser?.name ?? "RA").split(" ").map((word) => word[0]).join("").slice(0, 2).toUpperCase()}
         />
+        {topPanel === "inbox" ? (
+          <div className="top-panel-popover fixed right-4 top-14 z-[160] w-[min(92vw,400px)]">
+            <div className="top-panel-shell task-drawer glass-l3 overflow-hidden rounded-2xl border border-slate-200 shadow-2xl">
+              <div className="top-panel-header task-modal-header glass-l2 border-b border-slate-200 px-3 py-2.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-slate-800">Inbox</p>
+                  <div className="flex items-center gap-1.5">
+                    <button type="button" className="ui-btn ui-btn-ghost px-2 py-1 text-xs" onClick={markAllInboxAsRead}>
+                      Marcar tudo como lido
+                    </button>
+                    <button type="button" className="ui-btn ui-btn-ghost px-2 py-1 text-xs" onClick={clearReadInboxItems}>
+                      Limpar lidas
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="top-panel-body task-modal-body max-h-[55vh] space-y-2 overflow-auto p-3">
+                {workspace.inbox.length === 0 ? (
+                  <p className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500">Sem notificacoes.</p>
+                ) : (
+                  workspace.inbox.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => markInboxAsRead(item.id)}
+                      className={`w-full rounded-lg border px-3 py-2 text-left transition ${
+                        item.read ? "border-slate-200 bg-transparent" : "border-[var(--accent-300)] bg-[var(--accent-soft)]"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium text-slate-800">{item.title}</p>
+                        <div className="flex items-center gap-1.5">
+                          <span className="rounded-full border border-slate-300 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.08em] text-slate-500">
+                            {item.kind === "mention" ? "mencao" : item.kind === "deadline" ? "prazo" : "sistema"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              removeInboxItem(item.id);
+                            }}
+                            className="ui-btn ui-btn-ghost h-6 w-6 rounded-md p-0 text-xs text-slate-500 hover:text-rose-600"
+                            aria-label="Excluir notificacao"
+                            title="Excluir notificacao"
+                          >
+                            x
+                          </button>
+                        </div>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-600">{item.description}</p>
+                      <p className="mt-1 text-[10px] text-slate-500">{item.createdAt}</p>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
+        {topPanel === "help" ? (
+          <div className="top-panel-popover fixed right-4 top-14 z-[160] w-[min(92vw,430px)]">
+            <div className="top-panel-shell task-drawer glass-l3 overflow-hidden rounded-2xl border border-slate-200 shadow-2xl">
+              <div className="top-panel-header task-modal-header glass-l2 border-b border-slate-200 px-3 py-2.5">
+                <p className="text-sm font-semibold text-slate-800">Central de ajuda</p>
+                <input
+                  className="ui-control mt-2 w-full"
+                  placeholder="Buscar artigo..."
+                  value={helpQuery}
+                  onChange={(event) => setHelpQuery(event.target.value)}
+                />
+              </div>
+              <div className="top-panel-body task-modal-body max-h-[56vh] space-y-2 overflow-auto p-3">
+                {filteredHelpArticles.length === 0 ? (
+                  <p className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500">Nenhum artigo encontrado.</p>
+                ) : (
+                  filteredHelpArticles.map((article) => (
+                    <article key={article.id} className="glass-soft rounded-lg border border-slate-200 px-3 py-2">
+                      <p className="text-sm font-semibold text-slate-800">{article.title}</p>
+                      <p className="mt-1 text-xs text-slate-600">{article.content}</p>
+                      <p className="mt-1 text-[10px] uppercase tracking-[0.08em] text-slate-500">{article.category}</p>
+                    </article>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
+        {profileOpen ? (
+          <div className="task-overlay fixed inset-0 z-[170] flex items-center justify-center p-4 md:p-6" onClick={() => setProfileOpen(false)}>
+            <div className="task-drawer glass-l3 relative w-full max-w-[980px] overflow-hidden rounded-3xl border border-slate-200 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+              <div className="task-modal-header glass-l2 border-b border-slate-200 px-5 pb-4 pt-5">
+                <div className="flex items-center justify-between gap-3">
+                <div>
+                    <p className="task-modal-kicker">Conta e Organizacao</p>
+                    <h3 className="task-modal-title text-[1.32rem]">{currentUser?.name ?? "Usuario"}</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button type="button" className="ui-btn ui-btn-ghost px-3 py-1.5 text-sm" onClick={handleLogout}>
+                    Sair
+                  </button>
+                  <button type="button" className="ui-btn ui-btn-ghost px-3 py-1.5 text-sm" onClick={() => setProfileOpen(false)}>
+                    Fechar
+                  </button>
+                </div>
+              </div>
+              </div>
+              <div className="task-modal-body max-h-[calc(88vh-96px)] overflow-auto p-4 md:p-5">
+              <div className="grid gap-4 lg:grid-cols-3">
+                <section className="task-modal-section">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Login rapido</p>
+                  <p className="mt-1 text-xs text-slate-600">Troque de usuario para simular sessoes.</p>
+                  <div className="mt-2 space-y-1.5">
+                    {workspace.users.map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => {
+                          setWorkspace((current) => ({ ...current, currentUserId: user.id }));
+                          window.localStorage.setItem(AUTH_SESSION_KEY, user.id);
+                        }}
+                        className={`w-full rounded-lg border px-2.5 py-2 text-left text-xs ${
+                          workspace.currentUserId === user.id ? "border-[var(--accent-300)] bg-[var(--accent-soft)]" : "border-slate-200"
+                        }`}
+                      >
+                        <p className="font-semibold text-slate-800">{user.name}</p>
+                        <p className="text-slate-600">{user.email}</p>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+                <section className="task-modal-section">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Criar usuario</p>
+                  <form className="mt-2 space-y-2" onSubmit={createUser}>
+                    <input className="ui-control w-full" placeholder="Nome" value={newUserName} onChange={(event) => setNewUserName(event.target.value)} />
+                    <input className="ui-control w-full" placeholder="Email" value={newUserEmail} onChange={(event) => setNewUserEmail(event.target.value)} />
+                    <input className="ui-control w-full" placeholder="Senha" type="password" value={newUserPassword} onChange={(event) => setNewUserPassword(event.target.value)} />
+                    <select className="ui-control w-full" value={newUserRole} onChange={(event) => setNewUserRole(event.target.value as "admin" | "member" | "viewer")}>
+                      <option value="admin">Admin</option>
+                      <option value="member">Member</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
+                    <button type="submit" className="ui-btn ui-btn-primary w-full px-3 py-2 text-sm">Adicionar usuario</button>
+                  </form>
+                </section>
+                <section className="task-modal-section">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Criar time</p>
+                  <form className="mt-2 space-y-2" onSubmit={createTeam}>
+                    <input className="ui-control w-full" placeholder="Nome do time" value={newTeamName} onChange={(event) => setNewTeamName(event.target.value)} />
+                    <input className="ui-control w-full" placeholder="Descricao" value={newTeamDescription} onChange={(event) => setNewTeamDescription(event.target.value)} />
+                    <div className="max-h-28 space-y-1 overflow-auto rounded-lg border border-slate-200 p-2">
+                      {workspace.users.map((user) => (
+                        <label key={user.id} className="flex items-center gap-2 text-xs text-slate-700">
+                          <input type="checkbox" className="ui-checkbox" checked={newTeamMembers.includes(user.id)} onChange={() => toggleTeamMemberSelection(user.id)} />
+                          <span>{user.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <button type="submit" className="ui-btn ui-btn-primary w-full px-3 py-2 text-sm">Criar time</button>
+                  </form>
+                </section>
+              </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        {projectToRemove ? (
+          <div className="task-overlay fixed inset-0 z-[175] flex items-center justify-center p-4" onClick={() => setProjectToRemoveId(null)}>
+            <div className="task-drawer glass-l3 relative w-full max-w-[480px] overflow-hidden rounded-2xl border border-slate-200 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+              <div className="task-modal-header glass-l2 border-b border-slate-200 px-4 pb-3 pt-4">
+                <p className="task-modal-kicker">Confirmacao</p>
+                <h3 className="mt-1 text-lg font-semibold text-slate-900">Excluir projeto</h3>
+              </div>
+              <div className="p-4">
+                <p className="text-sm text-slate-700">
+                  Deseja excluir o projeto <span className="font-semibold text-slate-900">&quot;{projectToRemove.name}&quot;</span>? Esta acao nao pode ser desfeita.
+                </p>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button type="button" className="ui-btn ui-btn-ghost px-3 py-1.5 text-sm" onClick={() => setProjectToRemoveId(null)}>
+                    Cancelar
+                  </button>
+                  <button type="button" className="ui-btn px-3 py-1.5 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-md" onClick={confirmRemoveProject}>
+                    Excluir projeto
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
         <div className="flex min-h-0 flex-1">
           <aside className="glass-surface hidden w-[272px] shrink-0 border-r border-slate-200 lg:flex lg:flex-col">
             <div className="border-b border-slate-200 px-4 py-4">
@@ -567,7 +1064,40 @@ export default function Home() {
             <div className="min-h-0 flex-1 space-y-1 overflow-auto px-3 pb-3 pt-2">
               {workspace.projects.map((project) => {
                 const active = project.id === activeProject.id;
-                return <button key={project.id} type="button" onClick={() => { setWorkspace((current) => ({ ...current, activeProjectId: project.id })); setSelectedTaskId(""); }} className={`w-full rounded-lg border px-3 py-2 text-left transition ${active ? "border-[var(--accent-300)] bg-[var(--accent-soft)]" : "border-transparent bg-transparent hover:border-slate-200 hover:bg-slate-50"}`}><div className="flex items-center gap-2"><span className={`h-2.5 w-2.5 rounded-full bg-gradient-to-r ${project.accent}`} /><p className="text-sm font-medium text-slate-800">{project.name}</p></div><p className="mt-0.5 text-xs text-slate-500">{project.tasks.length} tarefas</p></button>;
+                return (
+                  <div
+                    key={project.id}
+                    className={`w-full rounded-lg border px-2.5 py-2 transition ${
+                      active ? "border-[var(--accent-300)] bg-[var(--accent-soft)]" : "border-transparent hover:border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWorkspace((current) => ({ ...current, activeProjectId: project.id }));
+                          setSelectedTaskId("");
+                        }}
+                        className="min-w-0 flex-1 text-left"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className={`h-2.5 w-2.5 rounded-full bg-gradient-to-r ${project.accent}`} />
+                          <p className="truncate text-sm font-medium text-slate-800">{project.name}</p>
+                        </div>
+                        <p className="mt-0.5 text-xs text-slate-500">{project.tasks.length} tarefas</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeProject(project.id)}
+                        className="ui-btn ui-btn-ghost h-7 w-7 shrink-0 rounded-md p-0 text-xs font-semibold text-slate-500 hover:text-rose-600"
+                        aria-label={`Excluir projeto ${project.name}`}
+                        title={`Excluir projeto ${project.name}`}
+                      >
+                        x
+                      </button>
+                    </div>
+                  </div>
+                );
               })}
             </div>
           </aside>
@@ -646,14 +1176,14 @@ export default function Home() {
                     <input ref={quickTaskInputRef} className="ui-control w-full" placeholder="Nova tarefa" value={newTaskTitle} onChange={(event) => setNewTaskTitle(event.target.value)} />
                     <select className="ui-control" value={newTaskPriority} onChange={(event) => setNewTaskPriority(event.target.value as TaskPriority)}>{Object.keys(priorityMeta).map((priority) => <option key={priority} value={priority}>{priorityMeta[priority as TaskPriority].label}</option>)}</select>
                     <QuickDateField value={newTaskDueDate} onChange={setNewTaskDueDate} />
-                    <select className="ui-control" value={newTaskAssignee} onChange={(event) => setNewTaskAssignee(event.target.value)}>{members.map((member) => <option key={member} value={member}>{member}</option>)}</select>
+                    <select className="ui-control" value={newTaskAssignee} onChange={(event) => setNewTaskAssignee(event.target.value)}>{workspaceMembers.map((member) => <option key={member} value={member}>{member}</option>)}</select>
                     <select className="ui-control" value={newTaskMarker} onChange={(event) => setNewTaskMarker(event.target.value as MarkerTone)}>{markerOptions.map((marker) => <option key={marker} value={marker}>{markerMeta[marker].label}</option>)}</select>
                     <button type="submit" className="ui-btn ui-btn-primary px-4 py-2 text-sm">Adicionar</button>
                   </form>
 
                   <div className="min-h-0 flex-1 overflow-auto">
                     {appArea === "reports" ? (
-                      <ReportsView tasks={filteredTasks} />
+                      <ReportsView tasks={filteredTasks} membersList={workspaceMembers} />
                     ) : viewMode === "board" ? (
                       <div className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-4">
                         {statusOptions.map((status) => {
@@ -920,7 +1450,7 @@ export default function Home() {
                     </FieldLabel>
                     <FieldLabel label="Responsavel">
                       <select className="field-input" value={selectedTask.assignee} onChange={(event) => updateTask(selectedTask.id, { assignee: event.target.value })}>
-                        {members.map((member) => <option key={member} value={member}>{member}</option>)}
+                        {workspaceMembers.map((member) => <option key={member} value={member}>{member}</option>)}
                       </select>
                     </FieldLabel>
                     <FieldLabel label="Prazo">
@@ -999,12 +1529,12 @@ export default function Home() {
                               <button type="button" onClick={() => addComment(selectedTask.id)} className="ui-btn ui-btn-primary px-3 py-2 text-sm">Enviar</button>
                             </div>
                           </div>
-                          <p className="text-[11px] text-slate-500">Mencoes disponiveis: {members.map((member) => `@${member}`).join(", ")}</p>
+                          <p className="text-[11px] text-slate-500">Mencoes disponiveis: {workspaceMembers.map((member) => `@${member}`).join(", ")}</p>
                           <div className="max-h-44 space-y-2 overflow-auto pr-1">
                             {selectedTask.comments.length === 0 ? <p className="text-xs text-slate-500">Sem comentarios.</p> : selectedTask.comments.map((comment) => (
                               <div key={comment.id} className="task-list-item glass-l1 rounded-lg border border-slate-200 px-3 py-2 text-xs">
                                 <p className="font-semibold text-slate-700">{comment.author}</p>
-                                <p className="mt-1 text-slate-600"><CommentText text={comment.text} /></p>
+                                <p className="mt-1 text-slate-600"><CommentText text={comment.text} membersList={workspaceMembers} /></p>
                                 {comment.mentions.length > 0 ? <div className="mt-1.5 flex flex-wrap gap-1">{comment.mentions.map((mention) => <span key={`${comment.id}-${mention}`} className="rounded-full border border-[var(--accent-300)] bg-[var(--accent-soft)] px-1.5 py-0.5 text-[10px] text-[var(--accent-700)]">@{mention}</span>)}</div> : null}
                                 <p className="mt-1.5 text-[10px] text-slate-500">{comment.createdAt}</p>
                               </div>

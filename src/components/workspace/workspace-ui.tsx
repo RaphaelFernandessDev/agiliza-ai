@@ -11,8 +11,8 @@ import {
 } from "@/components/workspace/utils";
 import type { AccentMode, Task, ThemeMode } from "@/components/workspace/types";
 
-export function CommentText({ text }: { text: string }) {
-  const memberSet = new Set(members.map((member) => normalizeMentionHandle(member)));
+export function CommentText({ text, membersList = members }: { text: string; membersList?: string[] }) {
+  const memberSet = new Set(membersList.map((member) => normalizeMentionHandle(member)));
   const parts = text.split(/(@[A-Za-zÀ-ÿ0-9_]+)/g);
   return (
     <>
@@ -40,6 +40,11 @@ export function TopBar({
   onThemeChange,
   onAccentChange,
   onQuickAdd,
+  onInboxClick,
+  onHelpClick,
+  onProfileClick,
+  unreadInboxCount,
+  currentUserInitials,
 }: {
   projectName: string;
   themeMode: ThemeMode;
@@ -47,6 +52,11 @@ export function TopBar({
   onThemeChange: (value: ThemeMode) => void;
   onAccentChange: (value: AccentMode) => void;
   onQuickAdd: () => void;
+  onInboxClick: () => void;
+  onHelpClick: () => void;
+  onProfileClick: () => void;
+  unreadInboxCount: number;
+  currentUserInitials: string;
 }) {
   const [showColors, setShowColors] = useState(false);
   const accents: AccentMode[] = ["modern_blue", "neon_purple", "minimal_green", "vibrant_orange", "elegant_gray", "cyan_tech"];
@@ -141,11 +151,11 @@ export function TopBar({
             <PlusIcon />
             Adicionar rapido
           </button>
-          <IconButton label="Inbox" />
-          <IconButton label="Ajuda" />
-          <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
-            RA
-          </div>
+          <IconButton label="Inbox" onClick={onInboxClick} badge={unreadInboxCount} />
+          <IconButton label="Ajuda" onClick={onHelpClick} />
+          <button type="button" onClick={onProfileClick} className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+            {currentUserInitials}
+          </button>
         </div>
       </div>
     </header>
@@ -156,10 +166,15 @@ export function SideNavButton({ label, active, onClick }: { label: string; activ
   return <button type="button" onClick={onClick} className={`ui-btn w-full px-3 py-2 text-left text-sm font-medium ${active ? "bg-[var(--accent-600)] text-white" : "ui-btn-ghost border-transparent text-slate-700"}`}>{label}</button>;
 }
 
-export function IconButton({ label }: { label: string }) {
+export function IconButton({ label, onClick, badge = 0 }: { label: string; onClick?: () => void; badge?: number }) {
   return (
-    <button type="button" className="ui-icon-btn" aria-label={label} title={label}>
+    <button type="button" className="ui-icon-btn relative" aria-label={label} title={label} onClick={onClick}>
       {label === "Inbox" ? <InboxIcon /> : label === "Ajuda" ? <HelpIcon /> : <DotIcon />}
+      {badge > 0 ? (
+        <span className="absolute -right-1 -top-1 inline-flex min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
+          {badge > 9 ? "9+" : badge}
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -277,7 +292,7 @@ export function TimelineView({ tasks, onSelectTask }: { tasks: Task[]; onSelectT
   );
 }
 
-export function ReportsView({ tasks }: { tasks: Task[] }) {
+export function ReportsView({ tasks, membersList = members }: { tasks: Task[]; membersList?: string[] }) {
   const overdue = tasks.filter((task) => task.dueDate && task.dueDate < todayIso() && task.status !== "done").length;
   const completed = tasks.filter((task) => task.status === "done").length;
   const completionRate = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
@@ -288,7 +303,7 @@ export function ReportsView({ tasks }: { tasks: Task[] }) {
   }));
   const maxStatus = Math.max(...byStatus.map((item) => item.count), 1);
 
-  const byAssignee = members.map((member) => ({
+  const byAssignee = membersList.map((member) => ({
     member,
     open: tasks.filter((task) => task.assignee === member && task.status !== "done").length,
   }));
